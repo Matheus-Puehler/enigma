@@ -1,9 +1,6 @@
 import java.awt.Font;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Scanner;
-
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -11,7 +8,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.JLabel;
+import javax.swing.JButton;
 
 public class Calculator extends JFrame{
 
@@ -23,8 +23,16 @@ public class Calculator extends JFrame{
 	private JMenu file, help;
 	private JMenuItem close;
 	private JMenuItem about;
+	private JButton btnNovaPergunta;
+	private JLabel lblPergunta;
+	
 	
 	private JTextField display;
+	
+//	DADOS
+	
+	private MapManager manager = new MapManager();
+	private JButton btnNovoJogo;
 	
 	
 
@@ -46,19 +54,50 @@ public class Calculator extends JFrame{
 		sendUI(this);
 	}
 	private void sendDisplay() {
-		Scanner s = new Scanner(System.in); 
        display =  new JTextField("Colocar resposta aqui");
-       TextField textField = new TextField ();
-       System.out.println(textField);
        display.setBounds(200, 100, 600, 35);
        display.setEditable(true);
        display.setFont(new Font("Adobe Garamond Pro", Font.PLAIN, 20));
-       add(display);
+       
+       DocumentListener docListener = new DocumentListener() {
+		
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			textChanged(e);
+		}
+		
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			textChanged(e);			
+		}
+		
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			textChanged(e);			
+		}
+		
+		public void textChanged(DocumentEvent e) {
+			if(manager.jogoAcabado()) return;
+			String text = display.getText();
+			
+			if(manager.tentativa(text)) {
+				lblPergunta.setText("Acerto mizeravi, faz outra pergunta.");
+				btnNovaPergunta.setEnabled(true);
+			}
+				
+			
+			
+		}
+	};
+       
+       display.getDocument().addDocumentListener(docListener);
+       
+       getContentPane().add(display);
 		
 	}
 	private void sendMenuBar() {
 	  menuBar= new JMenuBar();
-	  file= new JMenu("Opções");
+	  file= new JMenu("OpÃ§Ãµes");
 	  help= new JMenu ("Ajuda");
 	  close = new JMenuItem ("Fechar");
 	  about= new JMenuItem ("Sobre");
@@ -94,9 +133,35 @@ public class Calculator extends JFrame{
 		app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		app.setSize(1000, 700);
 		app.setResizable(false);
-			app.setLayout(null);
+			app.getContentPane().setLayout(null);
+			
+			lblPergunta = new JLabel("");
+			lblPergunta.setBounds(235, 171, 482, 224);
+			getContentPane().add(lblPergunta);
+			
+			btnNovaPergunta = new JButton("Nova Pergunta");
+			btnNovaPergunta.setBounds(43, 100, 145, 25);
+			btnNovaPergunta.setEnabled(false);
+			getContentPane().add(btnNovaPergunta);
+			
+			btnNovoJogo = new JButton("Novo Jogo");
+			btnNovoJogo.setBounds(43, 137, 145, 25);
+			getContentPane().add(btnNovoJogo);
 		app.setLocationRelativeTo(null);
 		app.setVisible(true);
+		
+		clickListeners();
 	}
-
+	
+	private void clickListeners() {
+		btnNovaPergunta.addActionListener(action -> {
+			lblPergunta.setText(manager.nova_pergunta());
+			btnNovaPergunta.setEnabled(false);
+		});
+		btnNovoJogo.addActionListener(action -> {
+			btnNovaPergunta.setEnabled(false);
+			manager.novoJogo();
+			lblPergunta.setText(manager.getPerguntaAtual());
+		});
+	}
 }
